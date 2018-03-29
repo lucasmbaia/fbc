@@ -1,0 +1,6 @@
+package: github.com/lucasmbaia/fbc
+import:
+- package: github.com/ethereum/go-ethereum
+  subpackages:
+  - crypto
+  - p2p

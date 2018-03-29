@@ -1,0 +1,9 @@
+hash: 06444d49616e6f4790b8820faecb5af24612297193bcec87df88d1a5b0f88b84
+updated: 2017-11-08T10:15:38.329822372-02:00
+imports:
+- name: github.com/ethereum/go-ethereum
+  version: 9619a610248e9630968ba1d9be8e214b645c9c55
+  subpackages:
+  - crypto
+  - p2p
+testImports: []

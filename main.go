@@ -1,6 +1,7 @@
 package main
 
 import (
+  "encoding/json"
   "log"
   "github.com/lucasmbaia/fbc/core"
 )
@@ -8,18 +9,17 @@ import (
 func main() {
   var (
     genesis	= core.CreateGenesis()
-    blockchain	[]core.Block
     block	core.Block
-    previous	= genesis
   )
 
-  blockchain = append(blockchain, genesis)
+  core.Blockchain = append(core.Blockchain, genesis)
 
-  for i := 0; i < 20; i++ {
-    block = core.NextBlock(previous)
-    blockchain = append(blockchain, block)
-    previous = block
+  //for i := 0; i < 10; i++ {
+  for {
+    block = core.NextBlock()
+    core.AddBlock(block)
+
+    j, _ := json.Marshal(block)
+    log.Println("New Block add: ", string(j))
   }
-
-  log.Println(blockchain)
 }

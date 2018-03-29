@@ -6,18 +6,29 @@ import (
   "fmt"
   "strconv"
   "crypto/sha256"
+  "sync"
+  "log"
 )
 
 type Block struct {
-  Index		int
-  PreviousHash	string
-  Timestamp	int
-  Data		string
-  Hash		string
+  Index		int	`json:""`
+  PreviousHash	string	`json:""`
+  Timestamp	int	`json:""`
+  Data		string	`json:""`
+  Hash		string	`json:""`
 }
 
-func CalcHash(index int, prevHash, data string) string {
-  var hash = strconv.Itoa(index) + prevHash + data + strconv.FormatInt(time.Now().UTC().Unix(), 10)
+var (
+  Blockchain  []Block
+  Mutex	      = &sync.Mutex{}
+)
+
+func calcHashForBlock(block Block) string {
+  return CalcHash(block.Index, block.Timestamp, block.PreviousHash, block.Data)
+}
+
+func CalcHash(index, timestamp int, prevHash, data string) string {
+  var hash = strconv.Itoa(index) + strconv.Itoa(timestamp) + prevHash + data
 
   return fmt.Sprintf("%x", sha256.Sum256([]byte(hash)))
 }
@@ -32,8 +43,9 @@ func CreateGenesis() Block {
   }
 }
 
-func NextBlock(lastBlock Block) Block {
+func NextBlock() Block {
   var (
+    lastBlock = getLastestBlock()
     index     = lastBlock.Index + 1
     timestamp = int(time.Now().UTC().Unix())
     data      = "Block " + strconv.Itoa(index)
@@ -45,18 +57,37 @@ func NextBlock(lastBlock Block) Block {
     PreviousHash: lastBlock.Hash,
     Timestamp:	  timestamp,
     Data:	  "Block " + strconv.Itoa(index),
-    Hash:	  CalcHash(index, lastBlock.PreviousHash, data),
+    Hash:	  CalcHash(index, timestamp, lastBlock.Hash, data),
   }
 
   return block
 }
 
-func ValidateNewBlock(newBlock, lastBlock Block) error {
+func AddBlock(block Block) {
+  if err := validateNewBlock(block, getLastestBlock()); err != nil {
+    log.Println("Error to add block: ", err)
+    return
+  }
+
+  Mutex.Lock()
+  Blockchain = append(Blockchain, block)
+  Mutex.Unlock()
+
+  return
+}
+
+func validateNewBlock(newBlock, lastBlock Block) error {
   if lastBlock.Index + 1 != newBlock.Index {
     return errors.New("Invalid Index!")
   } else if lastBlock.Hash != newBlock.PreviousHash {
     return errors.New("Invalid PreviousHash!")
+  } else if calcHashForBlock(newBlock) != newBlock.Hash {
+    return errors.New("Invalid Hash: " + calcHashForBlock(newBlock) + " # " + newBlock.Hash)
   }
 
   return nil
+}
+
+func getLastestBlock() Block {
+  return Blockchain[len(Blockchain) - 1]
 }
